@@ -128,6 +128,14 @@ export class ExamStack extends cdk.Stack {
       },
     });
     
+    // Topic1 -> QueueA
+    topic1.addSubscription(new subs.SqsSubscription(queueA));
+
+    // Topic1 -> LambdaY
+    topic1.addSubscription(new subs.LambdaSubscription(lambdaYFn));
+
+    // QueueA -> LambdaX
+    lambdaXFn.addEventSource(new events.SqsEventSource(queueA));
   }
 }
   
