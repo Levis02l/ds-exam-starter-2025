@@ -128,11 +128,27 @@ export class ExamStack extends cdk.Stack {
       },
     });
     
-    // Topic1 -> QueueA
-    topic1.addSubscription(new subs.SqsSubscription(queueA));
+    // Topic1 -> QueueA, only Ireland or China
+    topic1.addSubscription(
+      new subs.SqsSubscription(queueA, {
+        filterPolicy: {
+          "address.country": sns.SubscriptionFilter.stringFilter({
+            allowlist: ["Ireland", "China"],
+          }),
+        },
+      })
+    );
 
-    // Topic1 -> LambdaY
-    topic1.addSubscription(new subs.LambdaSubscription(lambdaYFn));
+    // Topic1 -> LambdaY, only NOT Ireland or China
+    topic1.addSubscription(
+      new subs.LambdaSubscription(lambdaYFn, {
+        filterPolicy: {
+          "address.country": sns.SubscriptionFilter.stringFilter({
+            denylist: ["Ireland", "China"],
+          }),
+        },
+      })
+    );
 
     // QueueA -> LambdaX
     lambdaXFn.addEventSource(new events.SqsEventSource(queueA));
