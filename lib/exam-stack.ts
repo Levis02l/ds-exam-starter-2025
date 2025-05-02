@@ -70,8 +70,20 @@ export class ExamStack extends cdk.Stack {
       },
     });
 
-    const anEndpoint = api.root.addResource("patha");
+    // Add crew endpoint
+    const crewEndpoint = api.root.addResource("crew");
+    const crewMoviesEndpoint = crewEndpoint.addResource("movies");
+    const crewMovieIdEndpoint = crewMoviesEndpoint.addResource("{movieId}");
 
+    crewMovieIdEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(question1Fn, {
+        proxy: true,
+      })
+    );
+
+    // Give permissions to Lambda to access DynamoDB
+    table.grantReadData(question1Fn);
 
     // ==================================
     // Question 2 - Event-Driven architecture
