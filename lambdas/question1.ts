@@ -8,9 +8,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("[EVENT]", JSON.stringify(event));
     
+    // Get and validate movie ID from path
     const pathParameters = event?.pathParameters;
     const movieId = pathParameters?.movieId ? parseInt(pathParameters.movieId) : undefined;
-
     if (!movieId) {
       return {
         statusCode: 400,
@@ -19,26 +19,33 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       };
     }
 
+    // Get optional role query parameter
     const queryStringParameters = event.queryStringParameters;
     const role = queryStringParameters?.role;
 
-    const queryParams = {
-      TableName: process.env.TABLE_NAME,
-      KeyConditionExpression: role 
-        ? "movieId = :movieId AND #role = :role"
-        : "movieId = :movieId",
-      ExpressionAttributeValues: role
-        ? {
+    // If role is provided, query for specific crew role; otherwise, get all crew for the movie
+    const queryParams = role
+      ? {
+          TableName: process.env.TABLE_NAME,
+          KeyConditionExpression: "movieId = :movieId AND #role = :role",
+          ExpressionAttributeValues: {
             ":movieId": movieId,
             ":role": role,
-          }
-        : {
+          },
+          ExpressionAttributeNames: { "#role": "role" },
+        }
+      : {
+          TableName: process.env.TABLE_NAME,
+          KeyConditionExpression: "movieId = :movieId",
+          ExpressionAttributeValues: {
             ":movieId": movieId,
           },
-      ExpressionAttributeNames: role ? { "#role": "role" } : undefined,
-    };
+        };
 
+   
     const response = await ddbDocClient.send(new QueryCommand(queryParams));
+
+  
     if (!response.Items || response.Items.length === 0) {
       return {
         statusCode: 404,
